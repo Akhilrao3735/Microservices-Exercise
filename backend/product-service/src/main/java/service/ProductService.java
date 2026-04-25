@@ -5,6 +5,11 @@ import com.microservices.productservice.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import java.util.stream.Collectors;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -43,5 +48,18 @@ public class ProductService {
     public void deleteProduct(Integer id) {
         log.info("Deleting product with id: {}", id);
         productRepository.deleteById(id);
+    }
+    public Page<Product> getProductsWithPagination(int page, int size, String sortBy) {
+        log.info("Fetching products with pagination - page: {}, size: {}, sortBy: {}", page, size, sortBy);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortBy));
+        return productRepository.findAll(pageable);
+    }
+
+    public List<Product> getProductsAbovePrice(Double price) {
+        log.info("Fetching products above price: {}", price);
+        return productRepository.findAll()
+                .stream()
+                .filter(p -> p.getPrice() > price)
+                .collect(Collectors.toList());
     }
 }

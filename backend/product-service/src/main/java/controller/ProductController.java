@@ -5,6 +5,7 @@ import com.microservices.productservice.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -40,5 +41,17 @@ public class ProductController {
     public ResponseEntity<Void> deleteProduct(@PathVariable Integer id) {
         productService.deleteProduct(id);
         return ResponseEntity.noContent().build();
+    }
+    @GetMapping("/paginated")
+    public ResponseEntity<Page<Product>> getProductsWithPagination(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy) {
+        return ResponseEntity.ok(productService.getProductsWithPagination(page, size, sortBy));
+    }
+
+    @GetMapping("/above-price")
+    public ResponseEntity<List<Product>> getProductsAbovePrice(@RequestParam Double price) {
+        return ResponseEntity.ok(productService.getProductsAbovePrice(price));
     }
 }
