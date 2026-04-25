@@ -54,4 +54,8 @@ public class ProductController {
     public ResponseEntity<List<Product>> getProductsAbovePrice(@RequestParam Double price) {
         return ResponseEntity.ok(productService.getProductsAbovePrice(price));
     }
+    @GetMapping("/native/above-price")
+    public ResponseEntity<List<Product>> getProductsByNativeQuery(@RequestParam Double price) {
+        return ResponseEntity.ok(productService.getProductsByNativeQuery(price));
+    }
 }

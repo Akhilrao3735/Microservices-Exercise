@@ -62,4 +62,8 @@ public class ProductService {
                 .filter(p -> p.getPrice() > price)
                 .collect(Collectors.toList());
     }
+    public List<Product> getProductsByNativeQuery(Double price) {
+        log.info("Fetching products above price using native query: {}", price);
+        return productRepository.findProductsAbovePrice(price);
+    }
 }
