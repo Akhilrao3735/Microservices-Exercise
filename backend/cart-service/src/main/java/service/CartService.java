@@ -1,8 +1,9 @@
 package com.microservices.cartservice.service;
-
+import com.microservices.cartservice.dto.CartEventDTO;
 import com.microservices.cartservice.dto.ProductDTO;
 import com.microservices.cartservice.entity.Cart;
 import com.microservices.cartservice.entity.CartItem;
+import com.microservices.cartservice.kafka.CartEventProducer;
 import com.microservices.cartservice.repository.CartItemRepository;
 import com.microservices.cartservice.repository.CartRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class CartService {
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
     private final WebClient webClient;
+    private final CartEventProducer cartEventProducer;
 
     public Cart createCart(Cart cart) {
         log.info("Creating cart for userId: {}", cart.getUserId());
@@ -50,7 +52,17 @@ public class CartService {
         }
 
         log.info("Product validated. Adding item to cart: {}", cartItem.getCartId());
-        return cartItemRepository.save(cartItem);
+        CartItem savedItem = cartItemRepository.save(cartItem);
+
+        // Publish Kafka event
+        CartEventDTO event = new CartEventDTO(
+                savedItem.getCartId(),
+                savedItem.getProductId(),
+                savedItem.getQuantity()
+        );
+        cartEventProducer.sendCartEvent(event);
+
+        return savedItem;
     }
 
     public List<CartItem> getCartItems(Integer cartId) {
