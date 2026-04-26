@@ -3,6 +3,7 @@ package com.microservices.cartservice.controller;
 import com.microservices.cartservice.entity.Cart;
 import com.microservices.cartservice.entity.CartItem;
 import com.microservices.cartservice.service.CartService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class CartController {
     }
 
     @PostMapping("/items")
-    public ResponseEntity<CartItem> addItemToCart(@RequestBody CartItem cartItem) throws Exception {
+    public ResponseEntity<CartItem> addItemToCart(@Valid @RequestBody CartItem cartItem) throws Exception {
         return ResponseEntity.ok(cartService.addItemToCart(cartItem));
     }
 
