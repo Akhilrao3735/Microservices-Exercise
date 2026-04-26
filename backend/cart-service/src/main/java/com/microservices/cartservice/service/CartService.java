@@ -1,4 +1,5 @@
 package com.microservices.cartservice.service;
+
 import com.microservices.cartservice.dto.CartEventDTO;
 import com.microservices.cartservice.dto.ProductDTO;
 import com.microservices.cartservice.entity.Cart;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -34,14 +36,24 @@ public class CartService {
                 .orElseThrow(() -> new RuntimeException("Cart not found with id: " + id));
     }
 
-    public CartItem addItemToCart(CartItem cartItem) {
-        log.info("Validating product before adding to cart - productId: {}", cartItem.getProductId());
+    public CartItem addItemToCart(CartItem cartItem) throws Exception {
+        log.info("Async processing - fetching product and validating in parallel");
 
-        ProductDTO product = webClient.get()
-                .uri("/api/products/{id}", cartItem.getProductId())
-                .retrieve()
-                .bodyToMono(ProductDTO.class)
-                .block();
+        CompletableFuture<ProductDTO> productFuture = CompletableFuture.supplyAsync(() ->
+                webClient.get()
+                        .uri("/api/products/{id}", cartItem.getProductId())
+                        .retrieve()
+                        .bodyToMono(ProductDTO.class)
+                        .block()
+        );
+
+        CompletableFuture<Void> logFuture = CompletableFuture.runAsync(() ->
+                log.info("Started stock validation for productId: {}", cartItem.getProductId())
+        );
+
+        CompletableFuture.allOf(productFuture, logFuture).join();
+
+        ProductDTO product = productFuture.get();
 
         if (product == null) {
             throw new RuntimeException("Product not found with id: " + cartItem.getProductId());
@@ -51,10 +63,9 @@ public class CartService {
             throw new RuntimeException("Insufficient stock. Available: " + product.getStock());
         }
 
-        log.info("Product validated. Adding item to cart: {}", cartItem.getCartId());
+        log.info("Async tasks completed. Adding item to cart: {}", cartItem.getCartId());
         CartItem savedItem = cartItemRepository.save(cartItem);
 
-        // Publish Kafka event
         CartEventDTO event = new CartEventDTO(
                 savedItem.getCartId(),
                 savedItem.getProductId(),

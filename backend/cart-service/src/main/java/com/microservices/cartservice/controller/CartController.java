@@ -27,7 +27,7 @@ public class CartController {
     }
 
     @PostMapping("/items")
-    public ResponseEntity<CartItem> addItemToCart(@RequestBody CartItem cartItem) {
+    public ResponseEntity<CartItem> addItemToCart(@RequestBody CartItem cartItem) throws Exception {
         return ResponseEntity.ok(cartService.addItemToCart(cartItem));
     }
 
